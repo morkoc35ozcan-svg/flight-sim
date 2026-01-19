@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilot Interview Cockpit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { font-family: 'Exo 2', sans-serif; background-color: #0b1120; }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .recording-pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen p-6 relative overflow-hidden">
+
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-600/20 rounded-full blur-[100px]"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+        
+        <div class="lg:col-span-12 flex justify-between items-center glass p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <i data-lucide="plane" class="text-blue-400"></i>
+                <h1 class="text-xl font-bold tracking-widest text-white">FLIGHT DECK <span class="text-xs text-blue-400 font-normal">AI SIMULATOR</span></h1>
+            </div>
+            <div class="flex gap-4 text-xs font-mono text-slate-400">
+                <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-500 rounded-full"></div> SYSTEM ONLINE</span>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 space-y-6">
+            <div class="glass rounded-3xl p-8 min-h-[300px] flex flex-col justify-between relative">
+                <div>
+                    <span id="chapterBadge" class="inline-block px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold mb-4 border border-blue-500/20">READY</span>
+                    <h2 id="questionText" class="text-3xl md:text-4xl font-semibold leading-tight text-white mb-6">
+                        Press "Next Question" to begin.
+                    </h2>
+                </div>
+                
+                <div class="flex gap-4 mt-8">
+                    <button onclick="fetchQuestion()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                        <i data-lucide="refresh-cw"></i> NEXT QUESTION
+                    </button>
+                    <button id="micBtn" onclick="toggleRecording()" class="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-bold transition shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-2">
+                        <i data-lucide="mic"></i> <span id="micText">PUSH TO START REC</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultPanel" class="hidden glass rounded-3xl p-8 border-l-4 border-blue-500">
+                <div class="flex items-center gap-2 mb-4 text-blue-400">
+                    <i data-lucide="message-square"></i>
+                    <h3 class="font-bold text-sm tracking-widest">DEBRIEFING</h3>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Your Transcript (Corrected):</p>
+                    <p id="transcriptText" class="text-lg text-emerald-400 font-medium italic leading-relaxed">...</p>
+                </div>
+
+                <p id="summaryText" class="text-md text-slate-300 mb-4 border-l-2 border-slate-600 pl-4">...</p>
+                
+                <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-sm">
+                    <strong class="text-blue-300">Examiner Feedback:</strong> <span id="feedbackText">...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            <div class="glass rounded-3xl p-6 h-full">
+                <div class="flex items-center gap-2 mb-8 text-yellow-500">
+                    <i data-lucide="award"></i>
+                    <h3 class="font-bold tracking-widest text-sm text-white">PERFORMANCE</h3>
+                </div>
+
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex justify-between text-xs mb-2"><span class="text-slate-400">KNOWLEDGE</span><span id="score1Val" class="text-white">0/10</span></div>
+                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="score1Bar" class="h-full bg-blue-500 w-0 transition-all duration-1000"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-2"><span class="text-slate-400">ENGLISH</span><span id="score2Val" class="text-white">0/10</span></div>
+                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="score2Bar" class="h-full bg-purple-500 w-0 transition-all duration-1000"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-2"><span class="text-slate-400">SUFFICIENCY</span><span id="score3Val" class="text-white">0/10</span></div>
+                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="score3Bar" class="h-full bg-emerald-500 w-0 transition-all duration-1000"></div></div>
+                    </div>
+                </div>
+
+                <div class="mt-12 text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                    <div id="totalScore" class="text-5xl font-black text-white">0.0</div>
+                    <div class="text-xs text-slate-500 mt-2 tracking-widest">AVERAGE SCORE</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        let currentQa = {};
+        let isRecording = false;
+        let recognition;
+        // Bu değişken hem kesinleşmiş hem de o an işlenen cümleyi tutacak
+        let latestTranscript = ""; 
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            // --- AYARLAR ---
+            recognition.continuous = true; 
+            recognition.interimResults = true; // Anlık kelimeleri yakalamak şart
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                console.log("Mic started.");
+                latestTranscript = "";
+            };
+
+            recognition.onresult = function(event) {
+                let finalPart = "";
+                let interimPart = "";
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalPart += event.results[i][0].transcript;
+                    } else {
+                        interimPart += event.results[i][0].transcript;
+                    }
+                }
+                
+                // HATA BURADAYDI: Sadece finalPart'ı biriktiriyorduk.
+                // ÇÖZÜM: O anki final toplama yeni gelen final'i ekle, 
+                // AMA asıl önemli olan 'latestTranscript'i sürekli güncellemek.
+                
+                // Eğer yeni bir final geldiyse ana havuzumuza ekleyelim (ama global değişkeni sıfırlamayalım)
+                // Daha basit ve hatasız yöntem:
+                // Tarayıcı continuous modda bize tüm geçmişi vermez, parça parça verir.
+                // O yüzden birikimli gidelim:
+                
+                let currentSessionText = "";
+                // Tüm oturumu tekrar tarayalım (En garantisi budur)
+                // Ancak Chrome bazen bufferı temizler, bu yüzden manuel birleştirme daha güvenli.
+                // Basit çözüm: Kullanıcıya gösterdiğimiz metni baz alalım.
+            };
+            
+            // DAHA SAĞLAM YÖNTEM:
+            // Event her tetiklendiğinde tüm metni yakala
+            recognition.onresult = function(event) {
+                let interim = "";
+                let final = "";
+
+                // Döngüdeki tüm sonuçları tara
+                for (let i = 0; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        final += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                
+                // İşte burası kritik: Kaydı durdurduğumuzda elimizde olacak metin bu.
+                // Final kısımlar + O an havada kalan interim kısım.
+                latestTranscript = final + interim;
+                
+                console.log("Canlı:", latestTranscript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error("Mic Error:", event.error);
+                // 'no-speech' hatasında durdurma, devam etsin
+                if (event.error !== 'no-speech') {
+                    // Ciddi hataysa logla
+                }
+            };
+            
+            // Chrome bazen sessizlik olunca otomatik kapatır. 
+            // Eğer biz durdurmadıysak tekrar başlatalım (Keep-Alive)
+            recognition.onend = function() {
+                if (isRecording) {
+                    console.log("Chrome durdu, tekrar başlatılıyor...");
+                    try {
+                        recognition.start();
+                    } catch(e) { console.log("Yeniden başlatma hatası"); }
+                }
+            };
+
+        } else {
+            alert("Please use Google Chrome.");
+        }
+
+        async function fetchQuestion() {
+            document.getElementById('resultPanel').classList.add('hidden');
+            resetScores();
+            
+            try {
+                const res = await fetch('/api/question');
+                const data = await res.json();
+                currentQa = data;
+                
+                document.getElementById('questionText').innerText = data.Question;
+                document.getElementById('chapterBadge').innerText = (data.chapter || 'GENERAL').toUpperCase();
+                
+                speak(data.Question);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US';
+            msg.rate = 0.9;
+            let voices = window.speechSynthesis.getVoices();
+            if(voices.length > 0) {
+                const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English'));
+                if (preferred) msg.voice = preferred;
+            }
+            window.speechSynthesis.speak(msg);
+        }
+
+        // --- BAS-BAŞLAT / BAS-DURDUR ---
+        function toggleRecording() {
+            if (!isRecording) {
+                // BAŞLAT
+                latestTranscript = ""; // Hafızayı temizle
+                try {
+                    recognition.start();
+                    isRecording = true;
+                    
+                    const btn = document.getElementById('micBtn');
+                    btn.classList.add('bg-red-600', 'recording-pulse');
+                    btn.classList.remove('bg-emerald-600');
+                    btn.innerHTML = `<i data-lucide="square"></i> <span>STOP & ANALYZE</span>`;
+                    lucide.createIcons();
+                    document.getElementById('micText').innerText = "RECORDING...";
+                } catch(e) { console.error(e); }
+            } else {
+                // DURDUR
+                isRecording = false; // Önce bayrağı indir ki onend tekrar başlatmasın
+                recognition.stop();
+                
+                const btn = document.getElementById('micBtn');
+                btn.classList.remove('bg-red-600', 'recording-pulse');
+                btn.classList.add('bg-emerald-600');
+                btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin"></i> <span>ANALYZING...</span>`;
+                lucide.createIcons();
+                
+                // Chrome'un son veriyi işlemesi için minik bir gecikme
+                setTimeout(() => {
+                    // Burada finalTranscript yerine latestTranscript kullanıyoruz!
+                    // Yani havada kalan (interim) kelimeleri de alıyoruz.
+                    if (latestTranscript.length < 2) {
+                        alert("Ses algılanamadı veya çok kısa.");
+                        stopUiReset();
+                        return;
+                    }
+                    evaluateAnswer(latestTranscript);
+                }, 500);
+            }
+        }
+        
+        function stopUiReset() {
+            const btn = document.getElementById('micBtn');
+            btn.innerHTML = `<i data-lucide="mic"></i> <span>PUSH TO START REC</span>`;
+            lucide.createIcons();
+        }
+
+        async function evaluateAnswer(userText) {
+            console.log("Sending Full Text:", userText);
+            
+            document.getElementById('transcriptText').innerText = userText + " (AI Repairing...)";
+            document.getElementById('transcriptText').className = "text-lg text-yellow-500 font-medium italic leading-relaxed";
+
+            try {
+                const res = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        question: currentQa.Question,
+                        official_answer: currentQa.Answer,
+                        user_answer: userText
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.corrected_text) {
+                    document.getElementById('transcriptText').innerText = data.corrected_text;
+                    document.getElementById('transcriptText').className = "text-lg text-emerald-400 font-medium italic leading-relaxed";
+                }
+
+                updateBar('score1', data.score_knowledge);
+                updateBar('score2', data.score_english);
+                updateBar('score3', data.score_sufficiency);
+                
+                const avg = (data.score_knowledge + data.score_english + data.score_sufficiency) / 3;
+                document.getElementById('totalScore').innerText = avg.toFixed(1);
+                
+                document.getElementById('summaryText').innerText = data.summary;
+                document.getElementById('feedbackText').innerText = data.feedback;
+                document.getElementById('resultPanel').classList.remove('hidden');
+            
+            } catch (e) {
+                console.error(e);
+                alert("Analysis Error.");
+            } finally {
+                stopUiReset();
+            }
+        }
+
+        function updateBar(id, val) {
+            document.getElementById(`${id}Val`).innerText = `${val}/10`;
+            document.getElementById(`${id}Bar`).style.width = `${val * 10}%`;
+        }
+
+        function resetScores() {
+            updateBar('score1', 0);
+            updateBar('score2', 0);
+            updateBar('score3', 0);
+            document.getElementById('totalScore').innerText = "0.0";
+        }
+        
+        // Seslerin yüklenmesi için event listener
+        window.speechSynthesis.onvoiceschanged = () => {};
+    </script>
+</body>
+</html>
