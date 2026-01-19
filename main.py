@@ -7,8 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-from google import genai
-
+from groq import Groq
 # Mevcut importların en tepede kalsın (import os zaten var)
 
 # --- AYARLAR ---
